@@ -1,0 +1,668 @@
+#+title: 开发讲解
+
+* 后端
+** 技术栈
+1. Kotlin
+2. SpringBoot
+3. SpringWeb
+4. Spring-Data-Jpa
+5. Spring-Security
+6. java-jwt
+** 数据库设计
+项目中没有用到SQL语句，因为我使用了 spring-data-jpa, 可以自动生成SQL语句，省了我不少事
+*** Admin 管理员模型
+| 字段         | 数据类型   | 作用         |
+|--------------+------------+--------------|
+| id           | bigint     | id           |
+| name         | varchar    | 名字         |
+| sex          | varchar    | 性别         |
+| telephone    | varchar    | 电话号码     |
+| email        | varchar    | 邮箱         |
+| passwordHash | varchar    | 密码的加密值 |
+| cardId       | varchar    | 身份证号码   |
+| roles        | List<Role> | 角色           |
+#+begin_src kotlin
+  @Entity(name = "Admin")
+  class Admin(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      override var id: Long?,
+
+      @Column(length = 20, nullable = false)
+      override var name: String,
+
+      @Column(length = 2, nullable = false)
+      var sex: String,
+
+      @Column(length = 11, nullable = false)
+      var telephone: String,
+
+      @Column(length = 20, nullable = false)
+      var email: String,
+
+      @Column(length = 255, nullable = false)
+      override var passwordHash: String,
+
+      @Column(length = 18, nullable = false)
+      var cardId: String,
+
+      @ManyToMany(fetch = FetchType.EAGER)
+      @JoinTable(
+          name = "AdminRole",
+          joinColumns = [JoinColumn(name = "userid", referencedColumnName = "id")],
+          inverseJoinColumns = [JoinColumn(name = "roleid", referencedColumnName = "id")]
+      )
+      override var roles: List<Role>
+  ): User
+#+end_src
+*** Student 学生模型
+| 字段         | 数据类型   | 作用         |
+|--------------+------------+--------------|
+| id           | bigint     | id           |
+| name         | varchar    | 名字         |
+| major        | varchar    | 专业         |
+| clazz        | varchar    | 班级         |
+| institute    | varchar    | 学院         |
+| telephone    | varchar    | 电话号码     |
+| email        | varchar    | 邮箱         |
+| passwordHash | varchar    | 密码的加密值 |
+| cardId       | varchar    | 身份证号码   |
+| sex          | varchar    | 性别         |
+| roles        | List<Role> | 角色           |
+
+#+begin_src kotlin
+  @Entity(name = "Student")
+  class Student(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      override var id: Long?,
+
+      @Column(length = 20, nullable = false)
+      override var name: String,
+
+      @Column(length = 4, nullable = false)
+      var grade: String,
+
+      @Column(length = 20, nullable = false)
+      var major: String,
+
+      @Column(length = 10, nullable = false)
+      var clazz: String,
+
+      @Column(length = 30, nullable = false)
+      var institute: String,
+
+      @Column(length = 11, nullable = false)
+      var telephone: String,
+
+      @Column(length = 30, nullable = false)
+      var email: String,
+
+      @Column(length = 255, nullable = false)
+      @JsonIgnore
+      override var passwordHash: String,
+
+      @Column(length = 18, nullable = false, unique = true)
+      var cardId: String,
+
+      @Column(length = 2, nullable = false)
+      var sex: String,
+
+      @ManyToMany(fetch = FetchType.EAGER)
+      @JoinTable(
+          name = "StudentRole",
+          joinColumns = [JoinColumn(name = "userid", referencedColumnName = "id")],
+          inverseJoinColumns = [JoinColumn(name = "roleid", referencedColumnName = "id")]
+      )
+      override var roles: List<Role>
+  ): User
+#+end_src
+
+*** Teacher 教师模型
+| 字段        | 数据类型   | 作用         |
+|-------------+------------+--------------|
+| id          | bigint     | id           |
+| name        | varchar    | 名字         |
+| institute   | varchar    | 学院         |
+| sex         | varchar    | 性别         |
+| telephone   | varchar    | 电话号码     |
+| email       | varchar    | 邮箱         |
+| paswordHash | varchar    | 密码的加密值 |
+| cardId      | varchar    | 身份证号码   |
+| type        | varchar    | 职称         |
+| roles       | List<Role> | 角色           |
+
+#+begin_src kotlin
+  @Entity(name = "Teacher")
+  class Teacher(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      override var id: Long?,
+
+      @Column(length = 20, nullable = false)
+      override var name: String,
+
+      @Column(length = 20, nullable = false)
+      var institute: String,
+
+      @Column(length = 2, nullable = false)
+      var sex: String,
+
+      @Column(length = 11, nullable = false)
+      var telephone: String,
+
+      @Column(length = 20, nullable = false)
+      var email: String,
+
+      @Column(length = 255, nullable = false)
+      @JsonIgnore
+      override var passwordHash: String,
+
+      @Column(length = 18, nullable = false, unique = true)
+      var cardId: String,
+
+      @Column(length = 20, nullable = false)
+      var type: String,
+
+      @ManyToMany(fetch = FetchType.EAGER)
+      @JoinTable(
+          name = "TeacherRole",
+          joinColumns = [JoinColumn(name = "userid", referencedColumnName = "id")],
+          inverseJoinColumns = [JoinColumn(name = "roleid", referencedColumnName = "id")]
+      )
+      override var roles: List<Role>
+  ): User
+#+end_src
+*** Answer 问题答案
+=Answer= 不是从数据库中直接提取出来的，他通过提取 *问题模型* 的字段来组合成一个 =Answer=
+#+begin_src kotlin
+  class Answer(
+      val question: String,
+      val subject: String,
+      val score: String,
+      val section: String,
+      val level: String,
+      val type: String
+  )
+#+end_src
+*** ExamManage 考试管理
+| 字段       | 数据类型 | 作用     |
+|------------+----------+----------|
+| examCode   | bigint   | 考试编号 |
+| desccption | varchar  | 课程名称 |
+| source     | varchar  | 课程名称 |
+| paperId    | bigint   | 试卷编号 |
+| examDate   | varchar  | 考试日期 |
+| totalTime  | varchar  | 持续时长 |
+| grade      | varchar  | 年纪     |
+| term       | varchar  | 学期     |
+| major      | varchar  | 专业     |
+| institute  | varchar  | 学院     |
+| totalScore | integer  | 总分     |
+| type       | varchar  | 考试类型 |
+| tips       | varchar  | 考生须知     |
+
+#+begin_src kotlin
+  @Entity(name = "ExamManage")
+  class ExamManage(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      val examCode: Int?,
+
+      @Column(length = 50, nullable = false)
+      val description: String,
+
+      @Column(length = 20, nullable = false)
+      val source: String,
+
+      @Column(nullable = false)
+      val paperId: Long,
+
+      @Column(length = 10, nullable = false)
+      val examDate: String,
+
+      @Column(nullable = false)
+      val totalTime: Int,
+
+      @Column(length = 10, nullable = false)
+      val grade: String,
+
+      @Column(length = 10, nullable = false)
+      val term: String,
+
+      @Column(length = 20, nullable = false)
+      val major: String,
+
+      @Column(length = 20, nullable = false)
+      val institute: String,
+
+      @Column(nullable = false)
+      val totalScore: Int,
+
+      @Column(length = 255, nullable = false)
+      val type: String,
+
+      @Column(length = 255, nullable = false)
+      val tips: String
+  )
+#+end_src
+*** FillQuestion 填空题模型
+| 字段     | 数据类型 | 作用     |
+|----------+----------+----------|
+| id       | bigint   | 试题编号 |
+| subject  | varchar  | 考试科目 |
+| question | varchar  | 试题内容 |
+| answer   | varchar  | 正确答案 |
+| analysis | varchar  | 题目解析 |
+| score    | integer  | 分数     |
+| level    | varchar  | 难度等级 |
+| section  | varchar  | 所属章节     |
+
+#+begin_src kotlin
+  @Entity(name = "FillQuestion")
+  class FillQuestion(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      val id: Long?,
+
+      @Column(length = 20, nullable = false)
+      val subject: String,
+
+      @Column(length = 255, nullable = false)
+      val question: String,
+
+      @Column(length = 255, nullable = false)
+      val answer: String,
+
+      @Column(length = 255, nullable = false)
+      val analysis: String,
+
+      @Column(nullable = false)
+      val score: Int,
+
+      @Column(length = 5, nullable = false)
+      val level: String,
+
+      @Column(length = 20, nullable = false)
+      val section: String
+  ): Question()
+#+end_src
+*** JudgeQuestion 判断题模型
+| 字段     | 数据类型 | 作用     |
+|----------+----------+----------|
+| id       | bigint   | 试题编号 |
+| subject  | varchar  | 考试科目 |
+| question | varchar  | 试题内容 |
+| answer   | varchar  | 正确答案 |
+| analysis | varchar  | 题目解析 |
+| score    | integer  | 分数     |
+| level    | varchar  | 难度等级 |
+| section  | varchar  | 所属章节 |
+
+#+begin_src kotlin
+  @Entity(name = "JudgeQuestion")
+  class JudgeQuestion(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      val id: Long?,
+
+      @Column(length = 20, nullable = false)
+      val subject: String,
+
+      @Column(length = 255, nullable = false)
+      val question: String,
+
+      @Column(length = 255, nullable = false)
+      val answer: String,
+
+      @Column(length = 255, nullable = false)
+      val analysis: String,
+
+      @Column(nullable = false)
+      val score: Int,
+
+      @Column(length = 1, nullable = false)
+      val level: String,
+
+      @Column(length = 20, nullable = false)
+      val section: String,
+  ): Question()
+#+end_src
+
+*** MultiQuestion 多选题模型
+| 字段        | 数据类型 | 作用     |
+|-------------+----------+----------|
+| id          | bigint   | 试题编号 |
+| subject     | varchar  | 考试科目 |
+| question    | varchar  | 试题内容 |
+| answerA     | varchar  | 选项A    |
+| answerB     | varchar  | 选项B    |
+| answerC     | varchar  | 选项C    |
+| answerD     | varchar  | 选项D    |
+| rightAnswer | varchar  | 正确答案     |
+| analysis    | varchar  | 题目解析 |
+| score       | integer  | 分数     |
+| level       | varchar  | 难度等级 |
+| section     | varchar  | 所属章节 |
+
+#+begin_src kotlin
+  @Entity(name = "MultiQuestion")
+  class MultiQuestion(
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      val id: Long?,
+
+      @Column(length = 20, nullable = false)
+      val subject: String,
+
+      @Column(length = 255, nullable = false)
+      val question: String,
+
+      @Column(length = 255, nullable = false)
+      val answerA: String,
+
+      @Column(length = 255, nullable = false)
+      val answerB: String,
+
+      @Column(length = 255, nullable = false)
+      val answerC: String,
+
+      @Column(length = 255, nullable = false)
+      val answerD: String,
+
+      @Column(length = 10, nullable = false)
+      val rightAnswer: String,
+
+      @Column(length = 255, nullable = false)
+      val analysis: String,
+
+      @Column(nullable = false)
+      val score: Int,
+
+      @Column(length = 20, nullable = false)
+      val section: String,
+
+      @Column(length = 1, nullable = false)
+      val level: String,
+  ): Question()
+#+end_src
+*** PaperManage 试卷管理
+| 字段         | 数据类型 | 作用     |
+|--------------+----------+----------|
+| paperId      | bigint   | 试卷编号 |
+| questionType | integer  | 题目类型 |
+| questionId   | bigint   | 题目编号 |
+#+begin_src kotlin
+  @Entity(name = "PaperManage")
+  @IdClass(PaperManageId::class)
+  class PaperManage(
+      @Id
+      @Column(nullable = false)
+      val paperId: Long,
+
+      @Id
+      @Column(nullable = false)
+      val questionType: Int,
+
+      @Id
+      @Column(nullable = false)
+      val questionId: Long
+  )
+
+  class PaperManageId(
+      val paperId: Long,
+      val questionType: Int,
+      val questionId: Long
+  ): Serializable {
+      constructor(): this(0, 0, 0)
+  }
+#+end_src
+*** Message 留言
+| 字段    | 数据类型 | 作用     |
+|---------+----------+----------|
+| id      | bigint   | 留言编号 |
+| title   | varchar  | 标题     |
+| content | varchar  | 留言内容 |
+| time    | date     | 留言时间     |
+
+#+begin_src kotlin
+  @Entity(name = "Message")
+  class Message {
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      val id: Long?
+
+      @Transient
+      val tempId: Long
+
+      @Column(length = 20, nullable = false)
+      val title: String
+
+      @Column(length = 255, nullable = false)
+      val content: String
+
+      @JsonFormat(pattern = "yyyy-MM-dd")
+      @Column(nullable = false)
+      val time: Date
+
+      @OneToMany
+      @JoinColumn(name = "messageId")
+      val replays: List<Replay>
+
+      constructor(id: Long, title: String, content: String, time: String, tempId: Long = 0) {
+          this.id = id
+          this.title = title
+          this.tempId = tempId
+          this.content = content
+          this.time = Date.valueOf(time)
+          this.replays = mutableListOf()
+      }
+  }
+#+end_src
+*** Replay 回复
+| 字段       | 数据类型 | 作用     |
+|------------+----------+----------|
+| id         | bigint   | 回复编号 |
+| messageId  | bigint   | 留言编号 |
+| replay     | varchar  | 内容     |
+| replayTime | date     | 回复时间 |
+
+#+begin_src kotlin
+  @Entity(name = "Replay")
+  class Replay {
+      @Id
+      @GeneratedValue(strategy = GenerationType.AUTO, generator = "myid")
+      @GenericGenerator(name = "myid", strategy = "com.example.backend.generator.ManualInsertGenerator")
+      val id: Long?
+
+      @Column(nullable = false)
+      val messageId: Long
+
+      @Column(length = 255, nullable = false)
+      val replay: String
+
+      @Column(nullable = false)
+      val replayTime: Date
+
+      constructor(id: Long, messageId: Long, replay: String, replayTime: String) {
+          this.id = id
+          this.messageId = messageId
+          this.replay = replay
+          this.replayTime = Date.valueOf(replayTime)
+      }
+  }
+#+end_src
+*** Score 分数
+| 字段       | 数据类型 | 作用     |
+|------------+----------+----------|
+| id         | bigint   | 分数编号 |
+| examCode   | integer  | 考试编号 |
+| studentId  | bigint   | 学号     |
+| subject    | varchar  | 课程名称 |
+| usualScore | integer  | 平时成绩 |
+| finalScore | integer  | 期末成绩 |
+| score      | integer  | 总成绩   |
+| answerDate | varchar  | 答题日期     |
+
+#+begin_src kotlin
+  @Entity(name = "Score")
+  class Score(
+      @Id
+      @GeneratedValue(strategy = GenerationType.IDENTITY)
+      val id: Long?,
+
+      @Column(nullable = false)
+      val examCode: Int,
+
+      @Column(nullable = false)
+      val studentId: Long,
+
+      @Column(length = 20, nullable = false)
+      val subject: String,
+
+      @Column(nullable = false)
+      val usualScore: Int,
+
+      @Column(nullable = false)
+      val finalScore: Int,
+
+      @Column(nullable = false)
+      val score: Int,
+
+      @Column(length = 10, nullable = false)
+      val answerDate: String
+  )
+#+end_src
+** Controller 接口
+Controller 返回的结果值统一为
+#+begin_src kotlin
+  class Response<T>(
+      val status: Status,
+      val message: String,
+      val data: T?
+  )
+
+  enum class Status(code: Int) {
+      Ok(0),
+      Err(1)
+  }
+#+end_src
+*** 登录接口
+
+| 方法 | url                   | 参数(JSON)                               | 说明           | 返回类型                                                  |
+|------+-----------------------+------------------------------------------+----------------+-----------------------------------------------------------|
+| POST | /authenticate/student | {username: string, passwordHash: string} | 学生登录接口   | {id: long, name: string, jwttoken: string, roles: string} |
+| POST | /authenticate/teacher | {username: stirng, passwordHash: string} | 教师登录接口   | {id: long, name: string, jwttoken: string, roles: string} |
+| POST | /authenticate/admin   | {username: string, passwordHash: string} | 管理员登录接口 | {id: long, name: string, jwttoken: string, roles: string} |
+
+*** CRUD 接口
+以下接口访问时需要在 =Header= 中带上 =Authorization= 字段，其中以 =Bearer= 为开头，再加一个空格，再加上 =jwttoken=
+**** answer
+| 方法 | url                    | 参数(JSON) | 说明         | 返回类型     |
+|------+------------------------+------------+--------------+--------------|
+| GET  | /answers/{page}/{size} |            | 分页查询答案 | Page<Answer> |
+
+**** ExamManage
+| 方法   | url                  | 参数(JSON) | 说明                            | 返回类型         |
+|--------+----------------------+------------+---------------------------------+------------------|
+| GET    | /exams               |            | 获取全部ExamManage              | List<ExamManage> |
+| GET    | /exams/{page}/{size} |            | 分页获取ExamManage              | Page<ExamManage> |
+| GET    | /exams/{examCode}    |            | 获取 examCode 匹配的 ExamManage | ExamManage       |
+| DELETE | /exams/{examCode}    |            | 删除 examCode 匹配的 ExamManage | Status           |
+| PUT    | /exams               | ExamManage | 更新 examCode 与参数匹配的 数据 | ExamManage       |
+| POST   | /exams               | ExamManage | 添加一个 ExamManage             | ExamManage       |
+| GET    | /exams/paperId       |            | 查询最后一条记录的 paperId      | Long             |
+
+**** FillQuestion
+| 方法 | url                       | 参数(JSON)   | 说明                          | 返回类型     |
+|------+---------------------------+--------------+-------------------------------+--------------|
+| POST | /fillQuestions            | FillQuestion | 添加一个 FillQuestion         | FillQuestion |
+| GET  | /fillQuestions/questionId |              | 查询最后一条记录的 questionId | Long         |
+
+**** JudgeQuestion
+| 方法 | url                        | 参数(JSON)    | 说明                          | 返回类型      |
+|------+----------------------------+---------------+-------------------------------+---------------|
+| POST | /judgeQuestions            | JudgeQuestion | 添加一个 JudgeQuestion        | JudgeQuestion |
+| GET  | /judgeQuestions/questionId |               | 查询最后一个记录的 questionId | Long          |
+
+**** MultiQuestion
+| 方法 | url                        | 参数(JSON)    | 说明                          | 返回类型      |
+|------+----------------------------+---------------+-------------------------------+---------------|
+| POST | /multiQuestions            | MultiQuestion | 添加一个 MultiQuestion        | MultiQuestion |
+| GET  | /multiQuestions/questionId |               | 查询最后一个记录的 questionId | Long          |
+
+**** Message
+| 方法   | url                     | 参数(JSON) | 说明                   | 返回类型      |
+|--------+-------------------------+------------+------------------------+---------------|
+| GET    | /messages/{page}/{size} |            | 分页查询               | Page<Message> |
+| GET    | /messages/{id}          |            | 查询 id 匹配的 Message | Message       |
+| DELETE | /messages/{id}          |            | 删除 id 匹配的 Message | Status        |
+| POST   | /messages               | Message    | 添加                   | Message       |
+
+**** Paper
+| 方法 | url               | 参数(JSON)  | 说明     | 返回类型                 |
+|------+-------------------+-------------+----------+--------------------------|
+| GET  | /papers           |             | 查询所有 | List<PaperManage>        |
+| GET  | /papers/{paperId} |             | 查询匹配 | Map<Int, List<Question>> |
+| POST | /papers           | PaperManage | 添加     | PaperManage              |
+
+**** QuestionItem
+| 方法 | url            | 参数(JSON)   | 说明 | 返回类型 |
+|------+----------------+--------------+------+----------|
+| POST | /questionItems | QuestionItem | 添加 | Status   |
+
+**** Replay
+| 方法 | url                  | 参数(JSON) | 说明                      | 返回类型 |
+|------+----------------------+------------+---------------------------+----------|
+| POST | /replays             | Replay     | 添加                      | Replay   |
+| GET  | /replays/{messageId} |            | 查找 messageId 匹配的记录 | List<Replay> |
+
+**** Score
+| 方法 | url                               | 参数(JSON) | 说明               | 返回类型    |
+|------+-----------------------------------+------------+--------------------+-------------|
+| GET  | /scores                           |            | 查询所有           | List<Score> |
+| GET  | /scores/{page}/{size}/{studentId} |            | 分页查询匹配的记录 | Page<Score> |
+| GET  | /scores?studentId                 |            | 查询匹配的记录     | List<Score> |
+| GET  | /scores?examCode                  |            | 查询匹配的记录     | List<Score> |
+| POST | /scores                           | Score      | 添加               | Score       |
+
+
+
+* 前端
+** 技术栈
+1. Vue3
+2. Vue Setup 语法
+3. Axios
+4. ElemenetPlus
+5. Echarts
+** 教师页面
+详见视频
+#+begin_export html
+<video class="wp-video" width="640" height="360" preload="metadata" controls="controls">
+  <source type="video/mp4" src="./video/教师页面.mp4"/>
+</video>
+#+end_export
+** 学生页面
+详见视频
+#+begin_export html
+<video class="wp-video" width="640" height="360" preload="metadata" controls="controls">
+  <source type="video/mp4" src="./video/学生页面.mp4"/>
+</video>
+
+#+end_export
+
+** 管理员页面
+详见视频
+#+begin_export html
+<video class="wp-video" width="640" height="360" preload="metadata" controls="controls">
+  <source type="video/mp4" src="./video/管理员页面.mp4"/>
+</video>
+#+end_export
