@@ -1,1 +1,88 @@
 #+title: 项目讲解
+* 教师页面
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:41:42
+[[file:images/教师页面/2022-12-17_20-41-42_screenshot.png]]
+
+** 考试管理
+*** 功能介绍
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:43:40
+[[file:images/教师页面/2022-12-17_20-43-40_screenshot.png]]
+
+*** 考试查询
+这个可以分页操作
+#+DOWNLOADED: screenshot @ 2022-12-17 20:44:05
+[[file:images/教师页面/2022-12-17_20-44-05_screenshot.png]]
+
+*** 添加考试
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:44:39
+[[file:images/教师页面/2022-12-17_20-44-39_screenshot.png]]
+
+** 题库管理
+*** 功能介绍
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:45:16
+[[file:images/教师页面/2022-12-17_20-45-16_screenshot.png]]
+
+*** 所有题库
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:45:40
+[[file:images/教师页面/2022-12-17_20-45-40_screenshot.png]]
+
+*** 添加题库
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:45:58
+[[file:images/教师页面/2022-12-17_20-45-58_screenshot.png]]
+
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:46:21
+[[file:images/教师页面/2022-12-17_20-46-21_screenshot.png]]
+
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:46:48
+[[file:images/教师页面/2022-12-17_20-46-48_screenshot.png]]
+
+** 成绩查询
+*** 学生成绩查询
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:47:25
+[[file:images/教师页面/2022-12-17_20-47-25_screenshot.png]]
+
+** 学生管理
+*** 学生管理
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:48:47
+[[file:images/教师页面/2022-12-17_20-48-47_screenshot.png]]
+
+*** 添加学生
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:49:00
+[[file:images/教师页面/2022-12-17_20-49-00_screenshot.png]]
+
+* 学生页面
+其实学生页面还不完善
+** 我的练习
+#+DOWNLOADED: screenshot @ 2022-12-17 20:50:39
+[[file:images/学生页面/2022-12-17_20-50-39_screenshot.png]]
+** 试卷
+#+DOWNLOADED: screenshot @ 2022-12-17 20:51:59
+[[file:images/学生页面/2022-12-17_20-51-59_screenshot.png]]
+** 我的分数
+#+DOWNLOADED: screenshot @ 2022-12-17 20:52:30
+[[file:images/学生页面/2022-12-17_20-52-30_screenshot.png]]
+
+* 管理员页面
+管理员页面与教师页面类似，添加了教师管理这一栏
+** 教师管理
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:54:09
+[[file:images/管理员页面/2022-12-17_20-54-09_screenshot.png]]
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:54:34
+[[file:images/管理员页面/2022-12-17_20-54-34_screenshot.png]]
+** 添加教师
+
+#+DOWNLOADED: screenshot @ 2022-12-17 20:54:57
+[[file:images/管理员页面/2022-12-17_20-54-57_screenshot.png]]

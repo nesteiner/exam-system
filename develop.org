@@ -643,26 +643,108 @@ Controller 返回的结果值统一为
 3. Axios
 4. ElemenetPlus
 5. Echarts
-** 教师页面
-详见视频
-#+begin_export html
-<video class="wp-video" width="640" height="360" preload="metadata" controls="controls">
-  <source type="video/mp4" src="./video/教师页面.mp4"/>
-</video>
-#+end_export
-** 学生页面
-详见视频
-#+begin_export html
-<video class="wp-video" width="640" height="360" preload="metadata" controls="controls">
-  <source type="video/mp4" src="./video/学生页面.mp4"/>
-</video>
+** Axios 请求设置
+这里 =Axios= 的请求前和 请求后都设置了一个拦截器
+#+begin_src typescript
+  import router from "@/router"
+  const BASE_URL = "http://localhost/api"
+  const instance = Axios.create({
+      baseURL: BASE_URL
+  })
 
-#+end_export
+  const LOCAL_TOKEN_KEY = "TOKEN"
 
-** 管理员页面
-详见视频
-#+begin_export html
-<video class="wp-video" width="640" height="360" preload="metadata" controls="controls">
-  <source type="video/mp4" src="./video/管理员页面.mp4"/>
-</video>
-#+end_export
+  instance.interceptors.request.use(
+      config => {
+          if(config.url?.startsWith("/authenticate")) {
+              return config
+          }
+
+          if (config.headers !== undefined) {
+              config.headers["Authorization"] = localStorage.getItem(LOCAL_TOKEN_KEY) || "no token"
+          }
+          return config
+      },
+
+      error => {
+          return Promise.reject(error.response)
+      }
+  )
+
+  instance.interceptors.response.use(
+      response => response,
+      error => {
+          let status = error.response.status
+          if(status == 401) {
+              router.replace({name: "login"})
+          }
+
+          return Promise.reject(error)
+      }
+  )
+#+end_src
+接下来就是简单的与后端接口对接即可
+
+** Echarts 图表加载
+#+begin_src html
+  <template>
+    <div id="grade">
+      <div ref="box" class="box"/>
+    </div>
+  </template>
+
+  <script lang="ts" setup>
+  import {onMounted, ref} from "vue";
+  import {findAllScoreByStudentId} from "@/api";
+  import {useRoute} from "vue-router";
+  import * as echarts from "echarts"
+
+  const route = useRoute()
+
+  const tableDataX = ref([] as string[])
+  const tableDataY = ref([] as number[])
+
+  const box = ref<HTMLDivElement>()
+
+  onMounted(async () => {
+    let studentId = parseInt(route.query["studentId"] as string)
+    let scores = await findAllScoreByStudentId(studentId)
+    scores.forEach((element: Score, index: number) => {
+      tableDataX.value.push(`第${index + 1}次`)
+      tableDataY.value.push(element.usualScore)
+    })
+
+    let scoreCharts = echarts.init(box.value!!)
+    let option = {
+      xAxis: {
+        type: "category",
+        data: tableDataX.value
+      },
+
+      yAxis: {
+        type: "value"
+      },
+
+      series: [
+        {
+          data: tableDataY.value,
+          type: "line",
+          itemStyle: {normal: {label: {show: true}}}
+        }
+      ]
+    }
+
+    scoreCharts.setOption(option)
+  })
+  </script>
+
+  <style lang="scss" scoped>
+  #grade {
+    position: relative;
+    .box {
+      width: 600px;
+      height: 400px;
+    }
+  }
+  </style>
+#+end_src
