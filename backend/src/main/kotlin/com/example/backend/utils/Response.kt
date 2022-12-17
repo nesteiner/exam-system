@@ -11,5 +11,10 @@ data class Response<T>(val code: Status, val message: String, val data: T?) {
         fun <T> Err(message: String, data: T): Response<T> {
             return Response(Status.Err, message, data)
         }
+
+        @JvmStatic
+        fun <T> Err(message: String): Response<T> {
+            return Response(Status.Err, message, null)
+        }
     }
 }

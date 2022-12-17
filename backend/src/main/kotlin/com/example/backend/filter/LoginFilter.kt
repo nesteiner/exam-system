@@ -57,6 +57,7 @@ class LoginFilter : OncePerRequestFilter() {
             }
         } else if (requestTokenHeader != null){
             logger.warn("jwt token does not begin with bearer string")
+            logger.info("jwt token is ${requestTokenHeader}")
             val result = Response.Err("jwt token does not begin with beare string", ErrorStatus.TokenParseError.code)
             response.status = 401
             response.writer.write(objectMapper.writeValueAsString(result))

@@ -13,6 +13,4 @@ class Role(
     val id: Long?,
     @Column(length = 32, nullable = false)
     val name: String
-) {
-
-}
+)

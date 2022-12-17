@@ -1,6 +1,8 @@
 package com.example.backend.filter
 
-import com.example.backend.service.UserService
+import com.example.backend.service.AdminService
+import com.example.backend.service.StudentService
+import com.example.backend.service.TeacherService
 import com.example.backend.utils.ErrorStatus
 import com.example.backend.utils.JwtTokenUtil
 import com.example.backend.utils.Response
@@ -11,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
 import org.springframework.stereotype.Component
@@ -21,7 +24,11 @@ class AuthenticationFilter: OncePerRequestFilter() {
     @Autowired
     lateinit var jwtTokenUtil: JwtTokenUtil
     @Autowired
-    lateinit var userService: UserService
+    lateinit var studentService: StudentService
+    @Autowired
+    lateinit var adminService: AdminService
+    @Autowired
+    lateinit var teacherService: TeacherService
 
     @Throws(UsernameNotFoundException::class)
     override fun doFilterInternal(
@@ -34,7 +41,18 @@ class AuthenticationFilter: OncePerRequestFilter() {
 
         if(username != null && jwttoken != null && SecurityContextHolder.getContext().authentication == null) {
             try {
-                val userdetails = userService.loadUserByUsername(username)
+                // val userdetails = userService.loadUserByUsername(username)
+                var userdetails: UserDetails? = null
+                if(studentService.findOne(username) != null) {
+                    userdetails = studentService.loadUserByUsername(username)
+                } else if(teacherService.findOne(username) != null) {
+                    userdetails = teacherService.loadUserByUsername(username)
+                } else if(adminService.findOne(username) != null) {
+                    userdetails = adminService.loadUserByUsername(username)
+                } else {
+                    throw UsernameNotFoundException("no such user")
+                }
+
                 if(jwtTokenUtil.validateToken(jwttoken, userdetails)) {
                     val usernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(
                         userdetails, null, userdetails.authorities

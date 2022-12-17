@@ -3,7 +3,9 @@ package com.example.backend.configure
 import com.example.backend.encoder.MD5PasswordEncoder
 import com.example.backend.filter.AuthenticationFilter
 import com.example.backend.filter.LoginFilter
-import com.example.backend.service.UserService
+import com.example.backend.service.AdminService
+import com.example.backend.service.StudentService
+import com.example.backend.service.TeacherService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -24,15 +26,30 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class WebSecurityConfigure {
     @Autowired
     @Throws(Exception::class)
-    fun configureGlobal(authenticationManagerBuilder: AuthenticationManagerBuilder, userService: UserService, mD5PasswordEncoder: MD5PasswordEncoder) {
+    fun configureGlobal(authenticationManagerBuilder: AuthenticationManagerBuilder, adminService: AdminService, studentService: StudentService, teacherService: TeacherService, mD5PasswordEncoder: MD5PasswordEncoder) {
         authenticationManagerBuilder
-            .userDetailsService(userService)
+            .userDetailsService(adminService)
+            .passwordEncoder(mD5PasswordEncoder)
+
+        authenticationManagerBuilder
+            .userDetailsService(studentService)
+            .passwordEncoder(mD5PasswordEncoder)
+
+        authenticationManagerBuilder
+            .userDetailsService(teacherService)
             .passwordEncoder(mD5PasswordEncoder)
     }
     @Value("\${authenticate-url}")
     lateinit var authenticateUrl: String
-    @Value("\${register-url}")
-    lateinit var registerUrl: String
+
+    @Value("\${student.register.url}")
+    lateinit var studentRegisterUrl: String
+
+    @Value("\${teacher.register.url}")
+    lateinit var teacherRegisterUrl: String
+
+    @Value("\${admin.register.url}")
+    lateinit var adminRegisterUrl: String
 
     @Bean
     @Throws(Exception::class)
@@ -45,9 +62,9 @@ class WebSecurityConfigure {
     fun filterChain(http: HttpSecurity, loginFilter: LoginFilter, authenticateFilter: AuthenticationFilter): SecurityFilterChain {
         http.csrf().disable()
             .authorizeHttpRequests()
-            .requestMatchers(authenticateUrl, registerUrl).permitAll()
+            .requestMatchers(authenticateUrl).permitAll()
+            .requestMatchers(studentRegisterUrl, teacherRegisterUrl, adminRegisterUrl).permitAll()
             .requestMatchers("/admin/**").hasAuthority("admin")
-            .requestMatchers("/user/**").hasAnyAuthority("user", "admin")
             .and()
             .authorizeHttpRequests().requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .anyRequest().authenticated()
