@@ -1,6 +1,6 @@
 <template>
   <div class="all">
-    <el-table :data="pagination.records" border>
+    <el-table :data="students" border>
       <el-table-column fixed="left" prop="name" label="姓名" width="180"></el-table-column>
       <el-table-column prop="institute" label="学院" width="200"></el-table-column>
       <el-table-column prop="major" label="专业" width="200"></el-table-column>
@@ -21,7 +21,7 @@
         :page-sizes="[6, 10]"
         :page-size="pagination.size"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="pagination.total"
+        :page-count="pagination.total"
         class="page"/>
   </div>
 </template>
@@ -43,8 +43,8 @@ const students = ref([] as Student[])
 
 async function getStudentInfo() {
   let response = await findAllStudents(pagination.current - 1, pagination.size)
-  pagination.total = response["totalPage"]
-  students.value = response["contents"]
+  pagination.total = response["totalPages"]
+  students.value = response["content"]
 }
 
 async function handleSizeChange(value: number) {
